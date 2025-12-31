@@ -59,7 +59,7 @@ This project is intended for learning and practicing Python basics.
 
 The game runs entirely in the terminal.
 
-Have fun and good luck guessing the number! 😄
+Have fun and good luck guessing the number!
 
 ---
 
