@@ -1,106 +1,135 @@
+import os
 import time
 from random import randint
+from time import sleep
 
+# ================== CONFIGURAÇÕES ==================
 WIDTH_CLI = 80
+
 LEVELS = {
     "Easy": 10,
     "Medium": 5,
     "Hard": 3
 }
+
 MIN = 1
 MAX = 100
+ESPERA = 2
 
-recordes: list[dict] = []
-for key in LEVELS.keys():
-    data = {"level": key, "attempts": None , "time": None}
-    recordes.append(data)
 
+# ================== UTILIDADES ==================
+def clear():
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+# ================== RECORDES ==================
+recordes = {
+    level: {"attempts": None, "time": None}
+    for level in LEVELS
+}
+
+
+# ================== JOGO ==================
 def iniciar_game():
     while True:
-        escolha_pc = randint(MIN, MAX)  # número novo a cada jogo
+        clear()
+        escolha_pc = randint(MIN, MAX)
 
         print("")
         print(" Welcome to the Number Guessing Game! ".center(WIDTH_CLI, "="))
 
-        # Seleção de dificuldade
+        # -------- Seleção de dificuldade --------
         while True:
             try:
                 print("\nPlease select a difficulty level:\n")
-                for i, (k, v) in enumerate(LEVELS.items()):
-                    print(f"{i + 1}. {k} ({v} chances)")
+                for i, (k, v) in enumerate(LEVELS.items(), start=1):
+                    print(f"{i}. {k} ({v} chances)")
 
-                level: int = int(input("Enter your choice: "))
-                chances = list(LEVELS.values())[level - 1]
+                level = int(input("\nEnter your choice: "))
                 level_name = list(LEVELS.keys())[level - 1]
+                chances = LEVELS[level_name]
                 break
             except (ValueError, IndexError):
                 print(f"\nInvalid choice. Choose between 1 and {len(LEVELS)}.")
 
         print(f"\nGreat! You selected the {level_name} level.")
         print("Let's start the game!\n")
+        sleep(ESPERA)
 
+        clear()
         tentativas = 0
         time_start = time.perf_counter()
 
-        # Loop principal do jogo
+        # -------- Loop principal --------
         while chances > 0:
-            print(" Game ".center(WIDTH_CLI, "="))
-            print(f"{chances} chance(s) left.")
+            clear()
+            recorde = recordes[level_name]
 
+            print(" Game ".center(WIDTH_CLI, "="))
+            print(f"Level: {level_name}")
+            print(f"Chances left: {chances}")
+            print(f"Attempts used: {tentativas}")
+
+            if recorde["attempts"] is not None:
+                print(f"Record: {recorde['attempts']} attempts "
+                      f"({recorde['time']:.2f}s)")
+
+            print(f"\nChoose a number between {MIN} and {MAX}")
+
+            # -------- Entrada do jogador --------
             try:
                 escolha = int(input("Enter your guess: "))
-
-                if escolha < MIN or escolha > MAX:
+                if not MIN <= escolha <= MAX:
                     raise ValueError
-
-                tentativas += 1
-
-                if escolha == escolha_pc:
-                    time_end = time.perf_counter()
-                    print(f"\nCongratulations! You guessed the number in {tentativas} attempts.")
-                    print(f"You win in {time_end - time_start:.2f} seconds.\n")
-
-                    recorde = recordes[level-1]
-
-                    if recorde["attempts"] is None:
-                        recorde["attempts"] = tentativas
-                        recorde["time"] = time_end - time_start
-                        print("\n\nFirst record for this level!\n\n")
-                    elif tentativas < recorde["attempts"]:
-                        recorde["attempts"] = tentativas
-                        recorde["time"] = time_end - time_start
-                        print("\n\nNew record beaten!\n\n")
-
-
-
-                    if tentativas < recordes[level-1]["attempts"]:
-                        print("recorde batido")
-
-
-
-                    break
-
-                elif escolha > escolha_pc:
-                    print("Incorrect! The number is less than your guess.\n")
-                else:
-                    print("Incorrect! The number is greater than your guess.\n")
-
-                chances -= 1
-
             except ValueError:
-                print(f"Please enter a number between {MIN} and {MAX}.\n")
+                print(f"\nPlease enter a valid number between {MIN} and {MAX}.")
+                sleep(ESPERA)
+                continue
 
+            tentativas += 1
+
+            # -------- Verificação --------
+            if escolha == escolha_pc:
+                time_end = time.perf_counter()
+                tempo_total = time_end - time_start
+
+                clear()
+                print(" YOU WIN! ".center(WIDTH_CLI, "="))
+                print(f"\nYou guessed the number in {tentativas} attempts.")
+                print(f"Time: {tempo_total:.2f} seconds.")
+
+                if (recorde["attempts"] is None or
+                        tentativas < recorde["attempts"]):
+                    recorde["attempts"] = tentativas
+                    recorde["time"] = tempo_total
+                    print("\n New record for this level! ")
+
+                break
+
+            elif escolha > escolha_pc:
+                print("\nToo high!")
+            else:
+                print("\nToo low!")
+
+            chances -= 1
+            sleep(ESPERA)
+
+        # -------- Derrota --------
         else:
             time_end = time.perf_counter()
-            print(f"You lose! The number was {escolha_pc}.")
-            print(f"Time spent: {time_end - time_start:.2f} seconds.\n")
+            clear()
+            print(" GAME OVER ".center(WIDTH_CLI, "="))
+            print(f"\nYou lose! The number was {escolha_pc}.")
+            print(f"Time spent: {time_end - time_start:.2f} seconds.")
 
-        # Reinício controlado
-        reiniciar = input("New game? (y/n): ").strip().upper()
-        if reiniciar != "Y":
+        # -------- Reinício --------
+        again = input("\nNew game? (y/n): ").strip().upper()
+        if again != "Y":
+            clear()
             print("\nThanks for playing!")
             break
 
 
+# ================== MAIN ==================
 if __name__ == "__main__":
     iniciar_game()
